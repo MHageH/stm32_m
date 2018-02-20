@@ -45,43 +45,31 @@
 #include "stm32f334-disco.h"
 
 /****************************************************************************
- * Pre-processor Definitions
+ * Prototypes
  ****************************************************************************/
+
+void stm32_dummy_setup(void);
 
 /****************************************************************************
- * Private Function Prototypes
+ * Functions
  ****************************************************************************/
 
-/****************************************************************************
- * Private Data
- ****************************************************************************/
+void stm32_boardinitialize(void) {} // Void function
 
-/****************************************************************************
- * Private Functions
- ****************************************************************************/
+#ifdef CONFIG_BOARD_INITIALIZE
 
-/****************************************************************************
- * Public Functions
- ****************************************************************************/
+void board_initialize(void){ // custom board initialization, IF CONFIG_BOARD_INITIALIZE is set to y
 
-/****************************************************************************
- * Name: stm32_boardinitialize
- *
- * Description:
- *   All STM32 architectures must provide the following entry point.  This
- *   entry point is called early in the intitialization -- after all memory
- *   has been configured and mapped but before any devices have been
- *   initialized.
- *
- ****************************************************************************/
+	stm32_dummy_setup(); // Initialize dummy driver
+}
 
-void stm32_boardinitialize(void)
-{
-
-#ifdef CONFIG_ARCH_LEDS
-  /* Configure on-board LEDs if LED support has been selected. */
-
-  board_autoled_initialize();
 #endif
 
-}
+/****************************************************************************
+ * Make sure to set CONFIG_BOARD_INITIALIZE to y in the nsh/defconf, 
+ * as well as, modifying the makefile to account for the changes
+ * ifeq ($(CONFIG_NSH_LIBRARY), y)
+ *	CSRCS += stm32_dummy.c
+ * endif
+ ****************************************************************************/
+

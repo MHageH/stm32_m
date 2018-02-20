@@ -36,7 +36,7 @@
 -include $(TOPDIR)/Make.defs
 
 ASRCS =
-CSRCS = stm32_boot.c
+CSRCS = stm32_boot.c 
 
 ifeq ($(CONFIG_ARCH_LEDS),y)
 CSRCS += stm32_autoleds.c
@@ -75,6 +75,10 @@ endif
 
 ifeq ($(CONFIG_DRIVERS_SMPS),y)
 CSRCS += stm32_smps.c
+endif
+
+ifeq ($(CONFIG_NSH_LIBRARY), y)
+CSRCS += stm32_dummy.c
 endif
 
 include $(TOPDIR)/configs/Board.mk
