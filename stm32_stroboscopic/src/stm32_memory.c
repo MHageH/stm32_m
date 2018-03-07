@@ -17,10 +17,12 @@
 #include "stm32.h"
 
 #include "stm32_spi.h"
+#include "stm32_memory.h"
 
 typedef FAR struct file		file_t;
 
-void write_memory (unsigned short input);
+uint8_t condition = 0;
+
 
 /*
 	The memory communication protocol is extracted from the 
@@ -86,17 +88,14 @@ static int memory_open(file_t * filep){
 
 	} 
 
-	// Grab the current memory mode :
-	
-	printf("Reading Memory condition :\n");
-	while(1){
-	SPI_SELECT(spi, SPIDEV_USER(1) , true); // Select RAM
-	// Send the Read mode register instruction and read the response
-	SPI_SEND(spi, 0x05);
-	//printf("Mode : %d\n", SPI_SEND(spi, 0x05));
-	SPI_SELECT(spi, SPIDEV_USER(1) , false);	
-	}
+	// Check memory mode first
+	//check_memory_mode();
 
+	printf("Focing mode Byte :\n");
+	write_memory_mode(MEMORY_BYTE_MODE);
+
+	// Check memory mode after the change
+	check_memory_mode();
 
 	printf("Opened Memory\n");
 	return(0);
@@ -122,8 +121,16 @@ static ssize_t memory_read(file_t *filep, FAR char *buf, size_t buflen) {
  }
 
  static ssize_t memory_write(file_t *filep, FAR const char *buf, size_t buflen){
- 	printf("Memory : Sending a word : %c  \n", *buf);
- 	write_memory(*buf);
+
+ 	// Write procedure 
+	SPI_SELECT(spi, SPIDEV_USER(1), true);
+
+	// Begin by sending 0x02
+	SPI_SEND(spi, 0x02);
+	SPI_SEND(spi, 0x00);
+	SPI_SEND(spi, 0x00);
+  	SPI_SELECT(spi, SPIDEV_USER(1), false);
+
  	return buflen;
  }
 
@@ -135,8 +142,102 @@ void stm32_memory_setup (void){
   (void)register_driver("/dev/memory", &memory_ops, 0444, NULL);
 }
 
-void write_memory (unsigned short input){
-	SPI_SELECT(spi, SPIDEV_USER(1), true);
-	SPI_SEND(spi, input);
-  	SPI_SELECT(spi, SPIDEV_USER(1), false);
+// Memory Specific Functions
+
+void check_memory_mode (void) {
+	// Grab the current memory mode :
+	
+	#ifdef PRINTF_DEFINE
+	printf("Reading Memory condition :\n");
+	#endif
+
+	// uint8_t condition;
+	SPI_SELECT(spi, SPIDEV_USER(1) , true); // Select RAM
+	SPI_SEND(spi, 0x05); // Send memory RDMR
+	SPI_RECVBLOCK(spi, &condition, 1); // Send one byte
+	SPI_SELECT(spi, SPIDEV_USER(1) , false);
+
+	#ifdef PRINTF_DEFINE
+
+	switch (condition){
+		case MEMORY_BYTE_MODE :
+			{
+				printf("Memory in Byte Mode : %u\n", condition);
+				break;
+			}
+		case MEMORY_PAGE_MODE :
+			{
+				printf("Memory in Page Mode : %u\n", condition);
+				break;
+			}
+		case MEMORY_SEQUENTIAL_MODE :
+			{
+				printf("Memory in Sequential Mode : %u\n", condition);
+				break;
+			}		
+		case MEMORY_RESERVED :
+			{
+				printf("Memory in Reserved Mode : %u\n", condition);
+				break;
+			}
+		default:
+			break;
+	}
+
+	#endif 
+
+	}
+
+void write_memory_mode (int MODE) {
+	#ifdef PRINTF_DEFINE
+	printf("Changing Memory Mode :\n");
+	#endif
+
+	
+	// Send memory WDMR
+	switch(MODE){
+		case MEMORY_BYTE_MODE :
+			{
+				// Send 0000 0001 to initiate writing 
+				SPI_SELECT(spi, SPIDEV_USER(1) , true); // Select RAM
+				
+				SPI_SEND(spi, 0x01);
+				// Force Byte Mode (00) 
+				SPI_SEND(spi, 0x00);
+				SPI_SELECT(spi, SPIDEV_USER(1) , false);
+				break;
+			}
+		case MEMORY_PAGE_MODE :
+			{
+				SPI_SELECT(spi, SPIDEV_USER(1) , true); // Select RAM
+				SPI_SEND(spi, 0x01);
+
+				// Force Page Mode (10)
+				SPI_SEND(spi, 0x80);
+				SPI_SELECT(spi, SPIDEV_USER(1) , false);
+				break;
+			}
+		case MEMORY_SEQUENTIAL_MODE :
+			{
+				SPI_SELECT(spi, SPIDEV_USER(1) , true); // Select RAM
+				SPI_SEND(spi, 0x01);
+				
+				// Force Sequential Mode (01)
+				SPI_SEND(spi, 0x40);
+				SPI_SELECT(spi, SPIDEV_USER(1) , false);
+				break;
+			}		
+		case MEMORY_RESERVED :
+			{
+				SPI_SELECT(spi, SPIDEV_USER(1) , true); // Select RAM
+				SPI_SEND(spi, 0x01);
+				// Force Reserved Mode (11)
+				SPI_SEND(spi, 0xC0); 
+				SPI_SELECT(spi, SPIDEV_USER(1) , false);
+				break;
+			}
+		default:
+			break;
+	}	
+
 }

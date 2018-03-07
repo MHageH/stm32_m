@@ -59,8 +59,8 @@ static int adcext_open(file_t * filep){
 
 	// Used to verify SPI status for the memory driver
 	spi->ops->status(spi, 1);
-
-  	SPI_SETMODE(spi, SPIDEV_MODE1); // Mohamed :: Changed from SPIDEV_MODE2
+	// Mohamed :: Changed from SPIDEV_MOD1, to check the memory workings
+  	SPI_SETMODE(spi, SPIDEV_MODE0); // Mohamed :: Changed from SPIDEV_MODE2
   	SPI_SETBITS(spi, 8); // 8 bit word (used later in the strobo main prog)
   	(void)SPI_HWFEATURES(spi, 0);
 
