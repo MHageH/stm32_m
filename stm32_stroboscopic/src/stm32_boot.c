@@ -38,11 +38,37 @@
  ****************************************************************************/
 
 #include <nuttx/config.h>
+#include "up_arch.h"
+
+#include <debug.h>
+#include <errno.h>
 
 #include <nuttx/board.h>
 #include <arch/board/board.h>
 
+#include <nuttx/arch.h>
+#include <nuttx/board.h>
+#include <nuttx/spi/spi.h>
+#include <nuttx/drivers/pwm.h>
+#include <nuttx/config.h>
+#include <nuttx/compiler.h>
+
+#include <sys/types.h>
+#include <unistd.h>
+#include <signal.h>
+#include <assert.h>
+#include <errno.h>
+
+#include <nuttx/fs/ioctl.h>
+#include <../stm32/stm32_pwm.h> // JMF : retire warnings concernant les fonctions init PWM 
+
+#include <stdio.h>
+
 #include "stm32f334-disco.h"
+
+#include "stm32_stroboscopic.h"
+#include "stm32_hrtim.h"
+
 
 /****************************************************************************
  * Prototypes
@@ -61,6 +87,10 @@ void stm32_boardinitialize(void) {} // Void function
 void board_initialize(void){ // custom board initialization, IF CONFIG_BOARD_INITIALIZE is set to y
 
 	stm32_dummy_setup(); // Initialize dummy driver
+	stm32_spidev_initialize(); // Initialize SPI
+	stm32_stroboscopic_adc_setup(); // Initialize ADC 
+	stm32_hrtim_control_setup(); // Setup controls for the hrtim driver
+	stm32_memory_setup(); // Setup the external memory driver
 }
 
 #endif

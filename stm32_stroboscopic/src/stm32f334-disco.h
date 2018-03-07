@@ -219,4 +219,16 @@ int stm32_powerled_setup(void);
 int stm32_smps_setup(void);
 #endif
 
+// Custom functions
+ 
+void stm32_boardinitialize(void);
+// void stm32_dds_setup(void);
+// int stm32_adc_setup(void); // We shouldn't use the internal ADCs
+
+void stm32_stroboscopic_adc_setup(void);
+void stm32_hrtim_control_setup(void);
+
+// Setup the memory
+void stm32_memory_setup(void); 
+
 #endif /* __CONFIGS_STM32F334_DISCO_SRC_STM32F334_DISCO_H */

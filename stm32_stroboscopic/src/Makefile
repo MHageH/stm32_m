@@ -35,8 +35,17 @@
 
 -include $(TOPDIR)/Make.defs
 
+ifeq ($(CONFIG_NSH_LIBRARY), y)
+CSRCS += stm32_dummy.c 
+CSRCS += stm32_spi.c
+CSRCS += stm32_stroboscopic_adc.c
+CSRCS += stm32_hrtim_control.c
+CSRCS += stm32_memory.c
+endif
+
+
 ASRCS =
-CSRCS = stm32_boot.c 
+CSRCS += stm32_boot.c 
 
 ifeq ($(CONFIG_ARCH_LEDS),y)
 CSRCS += stm32_autoleds.c
@@ -75,10 +84,6 @@ endif
 
 ifeq ($(CONFIG_DRIVERS_SMPS),y)
 CSRCS += stm32_smps.c
-endif
-
-ifeq ($(CONFIG_NSH_LIBRARY), y)
-CSRCS += stm32_dummy.c
 endif
 
 include $(TOPDIR)/configs/Board.mk

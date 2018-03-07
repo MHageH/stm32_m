@@ -163,11 +163,8 @@ static int powerled_ioctl(FAR struct powerled_dev_s *dev, int cmd,
  ****************************************************************************/
 
 struct powerled_priv_s powerled_priv;
-
 struct powerled_s g_powerled;
-
-struct powerled_ops_s g_powerled_ops =
-{
+struct powerled_ops_s g_powerled_ops = {
   .setup       = powerled_setup,
   .shutdown    = powerled_shutdown,
   .start       = powerled_start,
@@ -180,13 +177,11 @@ struct powerled_ops_s g_powerled_ops =
   .fault_get   = powerled_fault_get,
   .fault_clean = powerled_fault_clean,
   .ioctl       = powerled_ioctl
-};
-
-struct powerled_dev_s g_powerled_dev =
-{
+ };
+struct powerled_dev_s g_powerled_dev ={
   .ops = &g_powerled_ops,
   .priv = &g_powerled
-};
+  };
 
 /* Lower part of the POWERLED driver gather 3 pheriperals:
  * - HRTIM   - responsible for PWM generation
@@ -194,23 +189,20 @@ struct powerled_dev_s g_powerled_dev =
  * - DAC1CH1 - provides threshold voltage to comparator inverting input
  */
 
-struct powerled_lower_dev_s
-{
+struct powerled_lower_dev_s {
   struct hrtim_dev_s *hrtim; /* PWM generation */
   struct comp_dev_s  *comp;  /* current limit control */
   struct dac_dev_s   *dac;   /* current limit threshold */
   struct adc_dev_s   *adc;   /* not used in this demo - only as reference */
   struct opamp_dev_s *opamp; /* not used in this demo - only as reference */
-};
-
+  };
 struct powerled_lower_dev_s g_powerled_lower;
 
 /****************************************************************************
  * Private Functions
  ****************************************************************************/
 
-static int powerled_shutdown(FAR struct powerled_dev_s *dev)
-{
+static int powerled_shutdown(FAR struct powerled_dev_s *dev){
   FAR struct powerled_s      *powerled = (FAR struct powerled_s *)dev->priv;
   FAR struct powerled_priv_s *priv = (struct powerled_priv_s *)powerled->priv;
 
@@ -226,7 +218,7 @@ static int powerled_shutdown(FAR struct powerled_dev_s *dev)
   memset(powerled, 0, sizeof(struct powerled_s));
 
   return OK;
-}
+ }
 
 /****************************************************************************
  * Name: powerled_setup
@@ -239,8 +231,7 @@ static int powerled_shutdown(FAR struct powerled_dev_s *dev)
  *
  ****************************************************************************/
 
-static int powerled_setup(FAR struct powerled_dev_s *dev)
-{
+static int powerled_setup(FAR struct powerled_dev_s *dev){
   FAR struct powerled_lower_dev_s *lower = dev->lower;
   FAR struct powerled_s  *powerled   = (FAR struct powerled_s *)dev->priv;
   FAR struct hrtim_dev_s *hrtim      = NULL;
@@ -276,10 +267,8 @@ static int powerled_setup(FAR struct powerled_dev_s *dev)
   /* Do nothing */
 
   return OK;
-}
-
-static int powerled_start(FAR struct powerled_dev_s *dev)
-{
+ }
+static int powerled_start(FAR struct powerled_dev_s *dev) {
   FAR struct powerled_lower_dev_s *lower = dev->lower;
   FAR struct powerled_s      *powerled   = (FAR struct powerled_s *)dev->priv;
   FAR struct hrtim_dev_s     *hrtim      = lower->hrtim;
@@ -311,10 +300,15 @@ static int powerled_start(FAR struct powerled_dev_s *dev)
 
       /* Dimming through burst mode IDLE state */
 
+      // Mohamed :: Mod_
+
+      /*
       burst_pre = HRTIM_BURST_PRESCALER_1;
       burst_per = 1000;
       burst_cmp = (uint16_t)(((float)burst_per)*
                               (100.0-powerled->param.brightness)/100.0);
+
+                              */
     }
 
   else if (powerled->opmode == POWERLED_OPMODE_FLASH)
@@ -334,10 +328,15 @@ static int powerled_start(FAR struct powerled_dev_s *dev)
        * HRTIM burst clock     = 4394 Hz
        */
 
+      // Mohamed :: Mod_
+
+      /*
       burst_pre = HRTIM_BURST_PRESCALER_32768;
       burst_per = (uint16_t)(((float)HRTIM_CLOCK/(1<<burst_pre))/
                              powerled->param.frequency);
       burst_cmp = (uint16_t)((float)burst_per*((100-powerled->param.duty)/100.0));
+
+      */ 
     }
 
   /* Configure DAC buffer */
@@ -363,25 +362,32 @@ static int powerled_start(FAR struct powerled_dev_s *dev)
 
   /* Configure HRTIM PWM */
 
-  /* 1 period is 4us - 100% time */
+  // Mohamed :: Mod_ 
+
 
   HRTIM_PER_SET(hrtim, HRTIM_TIMER_TIMC, 18432);
 
-  /* 20% time */
+  HRTIM_CMP_SET(hrtim, HRTIM_TIMER_TIMC, HRTIM_CMP1, 9216);
+  HRTIM_CMP_SET(hrtim, HRTIM_TIMER_TIMC, HRTIM_CMP2, 9216);
+  HRTIM_CMP_SET(hrtim, HRTIM_TIMER_TIMC, HRTIM_CMP3, 9216);
+  HRTIM_CMP_SET(hrtim, HRTIM_TIMER_TIMC, HRTIM_CMP4, 9216);
 
-  HRTIM_CMP_SET(hrtim, HRTIM_TIMER_TIMC, HRTIM_CMP1, 3686);
 
-  /* 40% time */
+      burst_pre = HRTIM_BURST_PRESCALER_2;
+      burst_per = 1000;
+      burst_cmp = (uint16_t)((float)burst_per*((50)/100.0));
 
-  HRTIM_CMP_SET(hrtim, HRTIM_TIMER_TIMC, HRTIM_CMP2, 7373);
 
-  /* 60% time */
+  /* 1 period is 4us - 100% time */
 
-  HRTIM_CMP_SET(hrtim, HRTIM_TIMER_TIMC, HRTIM_CMP3, 11059);
+  /*
+  HRTIM_PER_SET(hrtim, HRTIM_TIMER_TIMD, 18432);
+  HRTIM_CMP_SET(hrtim, HRTIM_TIMER_TIMD, HRTIM_CMP1, 3686);
+  HRTIM_CMP_SET(hrtim, HRTIM_TIMER_TIMD, HRTIM_CMP2, 7373);
+  HRTIM_CMP_SET(hrtim, HRTIM_TIMER_TIMD, HRTIM_CMP3, 11059);
+  HRTIM_CMP_SET(hrtim, HRTIM_TIMER_TIMD, HRTIM_CMP4, 14746);
 
-  /* 80% time */
-
-  HRTIM_CMP_SET(hrtim, HRTIM_TIMER_TIMC, HRTIM_CMP4, 14746);
+  */
 
   /* Start DAC */
 
@@ -409,10 +415,8 @@ static int powerled_start(FAR struct powerled_dev_s *dev)
     }
 
   return OK;
-}
-
-static int powerled_stop(FAR struct powerled_dev_s *dev)
-{
+ }
+static int powerled_stop(FAR struct powerled_dev_s *dev) {
   FAR struct powerled_lower_dev_s *lower = dev->lower;
   FAR struct hrtim_dev_s     *hrtim      = lower->hrtim;
   FAR struct powerled_s      *powerled   = (FAR struct powerled_s *)dev->priv;
@@ -420,18 +424,15 @@ static int powerled_stop(FAR struct powerled_dev_s *dev)
 
   /* Disable output */
 
-  HRTIM_OUTPUTS_ENABLE(hrtim, HRTIM_OUT_TIMC_CH1, false);
+  HRTIM_OUTPUTS_ENABLE(hrtim, HRTIM_OUT_TIMD_CH1, false);
 
   /* Reset running flag */
 
   priv->running = false;
 
   return OK;
-}
-
-static int powerled_params_set(FAR struct powerled_dev_s *dev,
-                               FAR struct powerled_params_s *param)
-{
+ }
+static int powerled_params_set(FAR struct powerled_dev_s *dev, FAR struct powerled_params_s *param){
   FAR struct powerled_s *powerled = (FAR struct powerled_s *)dev->priv;
   int ret = OK;
 
@@ -442,10 +443,8 @@ static int powerled_params_set(FAR struct powerled_dev_s *dev,
   powerled->param.duty       = param->duty;
 
   return ret;
-}
-
-static int powerled_mode_set(FAR struct powerled_dev_s *dev, uint8_t mode)
-{
+ }
+static int powerled_mode_set(FAR struct powerled_dev_s *dev, uint8_t mode) {
   FAR struct powerled_s *powerled = (FAR struct powerled_s *)dev->priv;
   int ret = OK;
 
@@ -471,13 +470,10 @@ static int powerled_mode_set(FAR struct powerled_dev_s *dev, uint8_t mode)
         }
     }
 
-errout:
+ errout:
   return ret;
-}
-
-static int powerled_limits_set(FAR struct powerled_dev_s *dev,
-                               FAR struct powerled_limits_s *limits)
-{
+ }
+static int powerled_limits_set(FAR struct powerled_dev_s *dev, FAR struct powerled_limits_s *limits) {
   FAR struct powerled_s *powerled = (FAR struct powerled_s *)dev->priv;
   int ret = OK;
 
@@ -506,47 +502,36 @@ static int powerled_limits_set(FAR struct powerled_dev_s *dev,
 
   powerled->limits.lock = true;
 
-errout:
+ errout:
   return ret;
-}
-
-static int powerled_state_get(FAR struct powerled_dev_s *dev,
-                          FAR struct powerled_state_s *state)
-{
+ }
+static int powerled_state_get(FAR struct powerled_dev_s *dev, FAR struct powerled_state_s *state) {
   FAR struct powerled_s *powerled = (FAR struct powerled_s *)dev->priv;
 
   memcpy(state, &powerled->state, sizeof(struct powerled_state_s));
 
   return OK;
-}
-
-static int powerled_fault_set(FAR struct powerled_dev_s *dev, uint8_t fault)
-{
+ }
+static int powerled_fault_set(FAR struct powerled_dev_s *dev, uint8_t fault) {
   /* Do nothin */
 
   return -1;
-}
-
-static int powerled_fault_get(FAR struct powerled_dev_s *dev, FAR uint8_t *fault)
-{
+  }
+static int powerled_fault_get(FAR struct powerled_dev_s *dev, FAR uint8_t *fault) {
   /* Do nothing */
 
   return -1;
-}
-
-static int powerled_fault_clean(FAR struct powerled_dev_s *dev, uint8_t fault)
-{
+  }
+static int powerled_fault_clean(FAR struct powerled_dev_s *dev, uint8_t fault) {
   /* Do nothing */
 
   return -1;
-}
-
-static int powerled_ioctl(FAR struct powerled_dev_s *dev, int cmd, unsigned long arg)
-{
+  }
+static int powerled_ioctl(FAR struct powerled_dev_s *dev, int cmd, unsigned long arg) {
   /* Do nothing */
 
   return OK;
-}
+  }
 
 /****************************************************************************
  * Public Functions
@@ -565,8 +550,7 @@ static int powerled_ioctl(FAR struct powerled_dev_s *dev, int cmd, unsigned long
  *
  ****************************************************************************/
 
-int stm32_powerled_setup(void)
-{
+int stm32_powerled_setup(void) {
   FAR struct powerled_lower_dev_s *lower       = &g_powerled_lower;
   FAR struct powerled_dev_s       *powerled    = &g_powerled_dev;
   FAR struct hrtim_dev_s          *hrtim       = NULL;
@@ -631,6 +615,6 @@ int stm32_powerled_setup(void)
     }
 
   return ret;
-}
+  }
 
 #endif /* CONFIG_EXAMPLE_POWERLED && CONFIG_DRIVERS_POWERLED*/

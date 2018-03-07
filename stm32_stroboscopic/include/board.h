@@ -192,9 +192,16 @@
 
 /* SPI */
 
-#define GPIO_SPI1_MISO GPIO_SPI1_MISO_1
-#define GPIO_SPI1_MOSI GPIO_SPI1_MOSI_1
-#define GPIO_SPI1_SCK GPIO_SPI1_SCK_1
+// Mohamed :: Mod_ :: Redefine the SPI1 ports to USART 2
+
+#define GPIO_SPI1_MISO GPIO_SPI1_MISO_2
+#define GPIO_SPI1_MOSI GPIO_SPI1_MOSI_2
+#define GPIO_SPI1_SCK GPIO_SPI1_SCK_2
+
+#define GPIO_SPI2_MISO GPIO_SPI1_MISO_1
+#define GPIO_SPI2_MOSI GPIO_SPI1_MOSI_1
+#define GPIO_SPI2_SCK GPIO_SPI1_SCK_1
+
 
 /* TIM */
 
@@ -208,8 +215,8 @@
 
 /* USART */
 
-#define GPIO_USART2_RX GPIO_USART2_RX_3 /* PB4 */
-#define GPIO_USART2_TX GPIO_USART2_TX_3 /* PB3 */
+// #define GPIO_USART2_RX GPIO_USART2_RX_3 /* PB4 */
+// #define GPIO_USART2_TX GPIO_USART2_TX_3 /* PB3 */
 
 // Mohamed :: Mod_
 
@@ -235,13 +242,20 @@
 
 /* HRTIM configuration ******************************************************/
 
+// Mohamed :: Mod_ :: Disable TIMC and activates TIMD 
+// Mohamed :: Mod_ 2 :: Activate both TIMC and TIMD and enable the HRTIM_TIMC_CH1_RST
+// on HRTIM_OUT_RST_CMP2
+
+// TIMC 
 #define HRTIM_TIMC_PRESCALER      HRTIM_PRESCALER_1
 #define HRTIM_TIMC_MODE           HRTIM_MODE_CONT
-#define HRTIM_TIMC_DMA            (HRTIM_DMA_REP|HRTIM_DMA_CMP1|HRTIM_DMA_CMP2| \
-                                  HRTIM_DMA_CMP3|HRTIM_DMA_CMP4)
-#define HRTIM_TIMC_CH1_SET        HRTIM_OUT_SET_PER
-#define HRTIM_TIMC_CH1_RST        HRTIM_OUT_RST_EXTEVNT2
-#define HRTIM_TIMC_CH1_IDLE_STATE HRTIM_IDLE_INACTIVE
+#define HRTIM_TIMC_DMA            HRTIM_DMA_CMP2
+#define HRTIM_TIMC_CH2_SET        HRTIM_OUT_SET_PER // instead of HRTIM_OUT_SET_PER
+// Mod :: Mohamed_
+//#define HRTIM_TIMC_CH1_RST        HRTIM_OUT_RST_EXTEVNT2
+// Vital
+#define HRTIM_TIMC_CH2_RST        HRTIM_OUT_RST_CMP3
+#define HRTIM_TIMC_CH2_IDLE_STATE HRTIM_IDLE_INACTIVE
 
 #define HRTIM_EEV_SAMPLING        HRTIM_EEV_SAMPLING_d1
 #define HRTIM_EEV2_SRC            HRTIM_EEV_SRC_ANALOG
@@ -253,6 +267,23 @@
 #define HRTIM_BURST_CLOCK         HRTIM_BURST_CLOCK_HRTIM
 #define HRTIM_BURST_PRESCALER     HRTIM_BURST_PRESCALER_1
 #define HRTIM_BURST_TRIGGERS      0
+
+// TIMD 
+
+#define HRTIM_TIMD_PRESCALER      HRTIM_PRESCALER_1
+#define HRTIM_TIMD_MODE           HRTIM_MODE_CONT
+#define HRTIM_TIMD_DMA            (HRTIM_DMA_CMP1|HRTIM_DMA_CMP2)
+#define HRTIM_TIMD_CH1_SET        HRTIM_OUT_SET_PER
+// Mod :: Mohamed_
+//#define HRTIM_TIMD_CH1_RST        HRTIM_OUT_RST_EXTEVNT2
+// Vital
+#define HRTIM_TIMD_CH1_RST        HRTIM_OUT_RST_CMP1
+#define HRTIM_TIMD_CH1_IDLE_STATE HRTIM_IDLE_INACTIVE
+// Mod :: Mohamed_
+#define HRTIM_TIMD_CH2_SET HRTIM_OUT_SET_CMP2
+#define HRTIM_TIMD_CH2_RST HRTIM_OUT_SET_CMP3
+
+#define HRTIM_TIMD_CH2_IDLE_STATE HRTIM_IDLE_INACTIVE
 
 /* DMA channels *************************************************************/
 
@@ -319,6 +350,8 @@
 #define HRTIM_TIMB_DT_PRESCALER HRTIM_DEADTIME_PRESCALER_1
 
 #define HRTIM_ADC_TRG2       HRTIM_ADCTRG24_AC4
+
+
 
 /* DMA channels *************************************************************/
 
