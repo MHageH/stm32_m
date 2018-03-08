@@ -100,6 +100,9 @@ static int memory_open(file_t * filep){
 	printf("Done\n");
 	*/
 
+	printf("Focing mode Sequential : \n");
+	write_memory_mode(MEMORY_SEQUENTIAL_MODE);
+
 
 	// Check memory mode after the change
 	// check_memory_mode();
@@ -120,7 +123,6 @@ static int memory_close(file_t *filep){
 
 static ssize_t memory_read(file_t *filep, FAR char *buf, size_t buflen) {
  	int i;
-
  	struct MEMORY * PSRAM = &SRAM;
 
  	switch(PSRAM->mode){
@@ -130,6 +132,9 @@ static ssize_t memory_read(file_t *filep, FAR char *buf, size_t buflen) {
 				// SPI Select is controlled from IOCTL
 
  				if(!PSRAM->read_activated){
+
+ 				//printf("\n \n Mohamed : Debug \n\n");	
+
 				// Begin by sending 0x03, signaling read 
 				SPI_SEND(spi, 0x03); 
 
@@ -155,14 +160,11 @@ static ssize_t memory_read(file_t *filep, FAR char *buf, size_t buflen) {
  			break;
  	}
 
-
-
  	return buflen;
  }
 
  static ssize_t memory_write(file_t *filep, FAR const char *buf, size_t buflen){
 	int i;
-
 	struct MEMORY * PSRAM = &SRAM;
 
 
@@ -230,9 +232,14 @@ static int memory_ioctl(FAR struct file * filep, int cmd, unsigned long arg){
 			{
 				SPI_SELECT(spi, SPIDEV_USER(1), (bool)arg);
 			}
+	
 		case SET_READ_CONDITION :
 			{
-				PSRAM->read_activated = arg;
+				// Don't assign read_activated to PSRAM directly, or it will be changed
+				// to 1 on the way.
+				if (arg == 0){
+					PSRAM->read_activated = 0;					
+				}
 			}
 
 		default:
