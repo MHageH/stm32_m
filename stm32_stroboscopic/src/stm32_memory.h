@@ -41,22 +41,50 @@
 
 */ 
 
-// Printf define for debugging
+/*******************************************************
+	Printf define for debugging
+ *******************************************************/
 
 #undef PRINTF_DEFINE
 // #define PRINTF_DEFINE 1
+ 
+/*******************************************************
+	Defines
+ *******************************************************/
 
-// Defines
-
+// Memory Modes
 #define MEMORY_BYTE_MODE 0
 #define MEMORY_PAGE_MODE 128
 #define MEMORY_SEQUENTIAL_MODE 64 
 #define MEMORY_RESERVED 192
 
-// Prototypes
+// IOCTL Commands
+#define SET_MEMORY_MODE 0
+#define CS_CONDITION 1
+#define SET_CS_MEMORY 2
+#define SET_READ_CONDITION 3
+
+/*******************************************************
+	Prototypes
+ *******************************************************/
 
 void check_memory_mode (void); // Check Memory current mode
 void write_memory_mode (int MODE); // Change Memory current mode, to be controled from IOCTL
+
+/*******************************************************
+	Structures
+ *******************************************************/
+
+// Sets the current mode with IOCTL, as well as the activation status
+// for the Sequential mode : we need to send the write command and the address once
+
+struct MEMORY {
+	int mode; 
+	int write_activated; 
+	int read_activated;
+	int CS; // Controls the CS within write and read
+};
+
 
 
 #endif 
