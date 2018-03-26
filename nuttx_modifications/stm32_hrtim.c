@@ -44,6 +44,10 @@
 #include <assert.h>
 #include <debug.h>
 
+// Mohamed :: Added ARCH definitions from NuttX
+#include <nuttx/arch.h>
+//
+
 #include <arch/board/board.h>
 
 #include "chip.h"
@@ -724,6 +728,10 @@ static int hrtim_eev_cfg(FAR struct stm32_hrtim_s *priv, uint8_t index);
 static int hrtim_irq_config(FAR struct stm32_hrtim_s *priv);
 static uint16_t hrtim_irq_get(FAR struct hrtim_dev_s *dev, uint8_t timer);
 static int hrtim_irq_ack(FAR struct hrtim_dev_s *dev, uint8_t timer, int source);
+// Mohamed :: Added hrtim_setisr
+static int hrtim_irq_setisr(FAR struct hrtim_dev_s *dev, uint8_t timer, xcpt_t handler, void * arg, 
+    int source);
+//
 #endif
 static int hrtim_cmp_update(FAR struct hrtim_dev_s *dev, uint8_t timer,
                             uint8_t index, uint16_t cmp);
@@ -1546,6 +1554,9 @@ static const struct stm32_hrtim_ops_s g_hrtim1ops =
 #ifdef CONFIG_STM32_HRTIM_INTERRUPTS
   .irq_ack        = hrtim_irq_ack,
   .irq_get        = hrtim_irq_get,
+// Mohamed :: Added Handler
+  .irq_setisr     = hrtim_irq_setisr,
+//
 #endif
 #ifdef CONFIG_STM32_HRTIM_PWM
   .outputs_enable = hrtim_outputs_enable,
@@ -4606,6 +4617,92 @@ static uint16_t hrtim_irq_get(FAR struct hrtim_dev_s *dev, uint8_t timer)
 
   return (uint16_t)regval;
 }
+
+// Mohamed :: HRTIM IRQ set ISR
+
+static int hrtim_irq_setisr(FAR struct hrtim_dev_s *dev, uint8_t timer, xcpt_t handler, void * arg, 
+    int source){
+
+  int vectorno;
+
+  /*
+  FAR struct stm32_hrtim_slave_priv_s* slave;
+  slave = hrtim_slave_get(priv, timer);
+  if (slave == NULL)
+    {
+      ret = -EINVAL;
+    }
+  */
+
+switch (timer)
+  {
+    #ifdef CONFIG_STM32_HRTIM_MASTER
+        case HRTIM_TIMER_COMMON :
+          vectorno = STM32_IRQ_HRTIMTM;
+          break;
+    #endif
+
+    #ifdef CONFIG_STM32_HRTIM_TIMA
+        case HRTIM_TIMER_TIMA:
+          vectorno = STM32_IRQ_HRTIMTA;
+          break;
+    #endif
+
+    #ifdef CONFIG_STM32_HRTIM_TIMB
+        case HRTIM_TIMER_TIMB: 
+          vectorno = STM32_IRQ_HRTIMTB;
+          break;
+    #endif
+
+    #ifdef CONFIG_STM32_HRTIM_TIMC
+        case HRTIM_TIMER_TIMC: 
+          vectorno = STM32_IRQ_HRTIMTC;
+          break;
+    #endif
+
+    #ifdef CONFIG_STM32_HRTIM_TIMD
+        case HRTIM_TIMER_TIMD:
+          vectorno = STM32_IRQ_HRTIMTD;
+          break;
+    #endif
+
+    #ifdef CONFIG_STM32_HRTIM_TIME
+        case HRTIM_TIMER_TIME:        
+          vectorno = STM32_IRQ_HRTIMTE;
+          break;
+    #endif
+
+    default:
+        return -EINVAL;    
+  }
+
+    /* Disable interrupt when callback is removed */
+
+  if (!handler)
+    {
+      up_disable_irq(vectorno);
+      irq_detach(vectorno);
+      return OK;
+    }
+
+/* Otherwise set callback and enable interrupt */
+
+  irq_attach(vectorno, handler ,arg);
+  up_enable_irq(vectorno);
+
+#ifdef CONFIG_ARCH_IRQPRIO
+  /* Set the interrupt priority */
+
+  up_prioritize_irq(vectorno, NVIC_SYSH_PRIORITY_DEFAULT);
+#endif
+
+
+  
+  return OK;
+}
+
+//
+
 #endif  /* CONFIG_STM32_HRTIM_INTERRUPTS */
 
 /****************************************************************************

@@ -241,6 +241,12 @@
 #define HRTIM_DEADTIME_UPDATE(hrtim, tim, dt, val)          \
         (hrtim)->hd_ops->deadtime_update(hrtim, tim, dt, val)
 
+// Mohamed :: Define setisr wrapper
+// Now we can define a handler for HRTIM
+#define HRTIM_IRQ_SETISR(hrtim, irq, handler, arg, source)  \
+        (hrtim)->hd_ops->irq_setisr(hrtim, irq, handler, arg, source)
+//
+
 #define HRTIM_PER_MAX 0xFFFF
 #define HRTIM_CMP_MAX 0xFFFF
 #define HRTIM_CPT_MAX 0xFFFF
@@ -1011,6 +1017,11 @@ struct stm32_hrtim_ops_s
 #ifdef CONFIG_STM32_HRTIM_INTERRUPTS
   int      (*irq_ack)(FAR struct hrtim_dev_s *dev, uint8_t timer, int source);
   uint16_t (*irq_get)(FAR struct hrtim_dev_s *dev, uint8_t timer);
+// Mohamed :: Mod_ : Modified HRTIM operations structure, now we can call 
+// the HRTIM handler
+  int (* irq_setisr)(FAR struct hrtim_dev_s *dev,  uint8_t timer, xcpt_t handler, void * arg, 
+    int source);
+// 
 #endif
 #ifdef CONFIG_STM32_HRTIM_PWM
   int      (*outputs_enable)(FAR struct hrtim_dev_s *dev, uint16_t outputs,
