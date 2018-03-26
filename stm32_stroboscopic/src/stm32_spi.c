@@ -28,7 +28,7 @@ struct spi_dev_s * g_spi1;
 
 // Mohamed :: Added support for CS of the RAM 
 #define GPIO_SPI_CS_RAM \
-    (GPIO_OUTPUT | GPIO_PUSHPULL | GPIO_SPEED_2MHz | \
+    (GPIO_OUTPUT | GPIO_PUSHPULL | GPIO_SPEED_50MHz | \
      GPIO_OUTPUT_SET | GPIO_PORTA | GPIO_PIN4)
 
 
@@ -58,6 +58,12 @@ void weak_function stm32_spidev_initialize(void) {
   stm32_configgpio(GPIO_SPI_CS_RAM);
 
   printf("Initialized SPI CS for RAM\n");
+
+  // Maximal clock frequency for SPI SCK on the ADC : 51 MHz
+  // Maxmial clock frequency for the MEMORY : 20 MHz
+
+  // The logic analyser have problems catching with the SPI bus at 20 MHz
+  SPI_SETFREQUENCY(g_spi1, 10000000);
   #endif
 }
 
@@ -71,7 +77,7 @@ void stm32_spi1select(FAR struct spi_dev_s *dev, uint32_t devid, bool selected)
       switch(devid){
         case SPIDEV_USER(0) :
             {
-              // No chip select is needed for the ADC              
+              // No chip select is needed for the ADC 
                 break;
             }
         case SPIDEV_USER(1) :

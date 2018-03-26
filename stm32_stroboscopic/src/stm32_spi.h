@@ -1,6 +1,8 @@
 #ifndef __CONFIG_STM32_STROBOSCOPIC_SRC_STM32_SPI_H
 #define __CONFIG_STM32_STROBOSCOPIC_SRC_STM32_SPI_H
 
+// SPI 
+
 #define UNLOCKED 0
 #define LOCKED 1
 #define GETSTATUS 2
@@ -12,5 +14,9 @@ struct SPI_condition {
 };
 
 struct SPI_condition SPI_STATUS;
+
+// ADC SPI related
+
+#define SELECT_ADC 0
 
 #endif

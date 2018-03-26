@@ -68,11 +68,13 @@ bool hrtim_configured = false;
 struct hrtim_config_ch1 {
 	uint16_t per;
 	uint16_t cmp; 
+	uint8_t enabled;
 };
 
 struct hrtim_config_ch2{
 	uint16_t cmp2;
 	uint16_t cmp3;
+	uint8_t enabled;
 };
 
 struct hrtim_config_ch1 HRTIMD_CONFIG_CH1;
@@ -83,6 +85,8 @@ struct hrtim_config_ch2 HRTIMD_CONFIG_CH2;
 // ******************************************************************
 // Check HRTIM
 static int check_hrtim(struct hrtim_dev_s * hrtim);
+static int cmp2_mask(uint16_t reg);
+static int set2x_mask(uint16_t reg);
 
 // Function calls
 static int stm32_hrtim_open(file_t *);
@@ -119,9 +123,15 @@ static int stm32_hrtim_open(file_t * filep){
 		// ##################################################
 		// HRTIMD CH1 configuration 
 		// ##################################################
+		
 		struct hrtim_config_ch1 * HRTIMD_CH1_LOCAL_CONF = &HRTIMD_CONFIG_CH1;
+		
+		/*
+
 		HRTIMD_CH1_LOCAL_CONF->per = 55300; // 12 us gap
 		HRTIMD_CH1_LOCAL_CONF->cmp = 2304; // 0.5 us step :
+
+		*/ 
 
 		check_hrtim(hrtim);
 
@@ -132,35 +142,53 @@ static int stm32_hrtim_open(file_t * filep){
 		static int hrtim_outputs_config(FAR struct stm32_hrtim_s *priv);
 		*/
 
-		printf("Configuring the hrtim control driver...\n");
-		HRTIM_OUTPUTS_ENABLE(hrtim, HRTIM_OUT_TIMD_CH1, false); 
+		// printf("Configuring the hrtim control driver...\n");
+		//HRTIM_OUTPUTS_ENABLE(hrtim, HRTIM_OUT_TIMD_CH1, false); 
 
+		/*
 		HRTIM_PER_SET(hrtim, HRTIM_TIMER_TIMD, HRTIMD_CH1_LOCAL_CONF->per); 
 		HRTIM_CMP_SET(hrtim, HRTIM_TIMER_TIMD, HRTIM_CMP1, HRTIMD_CH1_LOCAL_CONF->cmp); 
 
-		printf("Enabling the hrtim control driver...\n");
+		//printf("Enabling the hrtim control driver...\n");
+		
 		HRTIM_OUTPUTS_ENABLE(hrtim, HRTIM_OUT_TIMD_CH1, true); // HRTIMD CH1 Configuration
-		printf("HRTIM TIMD Channel 1 enabled \n");
+		
+		*/
+
+		// printf("HRTIM TIMD Channel 1 enabled \n");
+
+		HRTIMD_CH1_LOCAL_CONF->enabled=0;
 
 		// ##################################################
 		// HRTIMD CH2 configuration 
 		// ##################################################
 
+		// Testing the deactivation of start_conv at the start :
 		struct hrtim_config_ch2 * HRTIMD_CH2_LOCAL_CONF = &HRTIMD_CONFIG_CH2;
+
+/*
 		HRTIMD_CH2_LOCAL_CONF->cmp2 = 4148; // 0.9 us gap
 		HRTIMD_CH2_LOCAL_CONF->cmp3 = 9217; // 2 us step 
-
+*/
 		// We want to use CH2 instead of CH1, since our physical PIN is connected to PB15
-		HRTIM_OUTPUTS_ENABLE(hrtim, HRTIM_OUT_TIMD_CH2, false); 
+		// HRTIM_OUTPUTS_ENABLE(hrtim, HRTIM_OUT_TIMD_CH2, false); 
 		
+		//HRTIM_PER_SET(hrtim, HRTIM_TIMER_TIMD, HRTIMD_CH1_LOCAL_CONF->per); 
+
+/*
 		HRTIM_CMP_SET(hrtim, HRTIM_TIMER_TIMD, HRTIM_CMP2, HRTIMD_CH2_LOCAL_CONF->cmp2);
 		HRTIM_CMP_SET(hrtim, HRTIM_TIMER_TIMD, HRTIM_CMP3, HRTIMD_CH2_LOCAL_CONF->cmp3);
 
+*/
 		// Set hrtim_configured flag to true 
 		hrtim_configured = true;
 
-		HRTIM_OUTPUTS_ENABLE(hrtim, HRTIM_OUT_TIMD_CH2, true); // HRTIMD CH2 Configuration
-		printf("HRTIM TIMD Channel 2 enabled \n");
+		// HRTIMD CH2 Control transfered to IOCTL 
+		//HRTIM_OUTPUTS_ENABLE(hrtim, HRTIM_OUT_TIMD_CH2, true); // HRTIMD CH2 Configuration
+		//printf("HRTIM TIMD Channel 2 enabled \n");
+
+		// Set the HRTIMD CH2 Control flag to false : HRTIMD CH2 is still not enabled
+		HRTIMD_CH2_LOCAL_CONF->enabled=0;
 
 	}
 		// Enable HRTIM PWM : We should now detect a signal on IOupdate, if the
@@ -186,6 +214,12 @@ static ssize_t stm32_hrtim_write(file_t * filep, FAR const char * buf, size_t bu
 	return OK;
 	}
 
+
+	int ret;
+	struct hrtim_config_ch1 * HRTIMD_CH1_LOCAL_CONF = &HRTIMD_CONFIG_CH1;
+	struct hrtim_config_ch2 * HRTIMD_CH2_LOCAL_CONF = &HRTIMD_CONFIG_CH2;
+
+
 static int     stm32_hrtim_ioctl(FAR struct file * filep, int cmd, unsigned long arg){
 	/*
 	The IOCTL function should be controlled from the application level to control the duty 
@@ -194,11 +228,18 @@ static int     stm32_hrtim_ioctl(FAR struct file * filep, int cmd, unsigned long
 	compilation.	
 	*/
 
+
+	// The definition are made outside of ioctl function to reduce the access time
+	/*
+
 	int ret;
 	struct hrtim_config_ch1 * HRTIMD_CH1_LOCAL_CONF = &HRTIMD_CONFIG_CH1;
 	HRTIMD_CH1_LOCAL_CONF->per = 55300; // Initiate periode for the timer (global on both channels).
 
 	struct hrtim_config_ch2 * HRTIMD_CH2_LOCAL_CONF = &HRTIMD_CONFIG_CH2;
+
+	*/
+
 
 	// Mohamed :: Tests
 	// printf("HRTIM IOCTL called\n");
@@ -222,7 +263,7 @@ static int     stm32_hrtim_ioctl(FAR struct file * filep, int cmd, unsigned long
 			// Mohamed :: Tests
 			//printf("HRTIM MOD for CH2 SET (CMP2) invoked, arg is : %d \n\n", (uint16_t)arg);
 			HRTIMD_CH2_LOCAL_CONF->cmp2 = (uint16_t)arg;
-			HRTIM_CMP_SET(hrtim, HRTIM_TIMER_TIMD, HRTIM_CMP2, HRTIMD_CH2_LOCAL_CONF->cmp2);
+			HRTIM_CMP_SET(hrtim, HRTIM_TIMER_TIMD, HRTIM_CMP2, HRTIMD_CH2_LOCAL_CONF->cmp2);			
 			break;
 		}
 		case STM32_HRTIM_MOD_TIMD_CH2_RST:
@@ -233,7 +274,91 @@ static int     stm32_hrtim_ioctl(FAR struct file * filep, int cmd, unsigned long
 			HRTIM_CMP_SET(hrtim, HRTIM_TIMER_TIMD, HRTIM_CMP3, HRTIMD_CH2_LOCAL_CONF->cmp3);
 			break;
 		}
+		// Must be called for the activation of HRTIMD CH2
+		case STM32_HRTIM_MOD_ENABLE_HRTIMD_CH2:
+		{
+			if (HRTIMD_CH2_LOCAL_CONF->enabled == 0){
+				HRTIM_OUTPUTS_ENABLE(hrtim, HRTIM_OUT_TIMD_CH2, false); 
+				
+
+				HRTIM_OUTPUTS_ENABLE(hrtim, HRTIM_OUT_TIMD_CH2, (bool)arg); // HRTIMD CH2 Configuration
+				
+				// printf("Enabled HRTIMD CH2\n");
+				/*
+				for (int j =0; j < 750000; j++){
+					// Initial wait to enable the HRTIM initialization
+				}
+				*/
+
+				HRTIMD_CH2_LOCAL_CONF->enabled = 1;
+			} 
+				break;
+		}
+		case STM32_HRTIM_MOD_ENABLE_HRTIMD_CH1:
+		{
+
+			// Check the flag if it is enabled or not 
+
+			if (HRTIMD_CH1_LOCAL_CONF->enabled == 0){
+				// HRTIMD_CH1_LOCAL_CONF->per = 55300; // 12 us gap
+				// HRTIMD_CH1_LOCAL_CONF->cmp = 2304; // 0.5 us step :
+				HRTIM_OUTPUTS_ENABLE(hrtim, HRTIM_OUT_TIMD_CH1, false); 
+
+
+				//HRTIMD_CH1_LOCAL_CONF->per = 55300; // 12 us gap
+				HRTIMD_CH1_LOCAL_CONF->per = 65535; // 12 us gap
+				HRTIMD_CH1_LOCAL_CONF->cmp = 2304; // 0.5 us step :
+
+
+				HRTIM_PER_SET(hrtim, HRTIM_TIMER_TIMD, HRTIMD_CH1_LOCAL_CONF->per); 
+				HRTIM_CMP_SET(hrtim, HRTIM_TIMER_TIMD, HRTIM_CMP1, HRTIMD_CH1_LOCAL_CONF->cmp); 
+
+			
+				HRTIM_OUTPUTS_ENABLE(hrtim, HRTIM_OUT_TIMD_CH1, (bool)arg); // HRTIMD CH1 Configuration
+	
+				// Set the flag to enabled
+				HRTIMD_CH1_LOCAL_CONF->enabled = 1;
+			}
+			
+			break;
+		}
+		case STM32_HRTIM_IRQ_TESTING:
+		{
+			// The interrupt handling is defined in board.h at HRTIM_IRQ_MCMP2
+			// Master Compare 2 Interrupt
+
+			printf("HRTIM IRQ GET %u\n", HRTIM_IRQ_GET(hrtim, HRTIM_TIMER_TIMD));
+			//printf("HRTIM IRQ GET 2 %u\n", HRTIM_IRQ_GET(hrtim, HRTIM_TIMER_TIMD));
+
+			break;
+		}
+		case STM32_HRTIM_IRQ_CLEAR_FLAGS:
+		{
+			//if (HRTIM_IRQ_GET(hrtim, HRTIM_TIMER_TIMD) == 15895){
+		//	if (cmp2_mask(HRTIM_IRQ_GET(hrtim, HRTIM_TIMER_TIMD)) == 1){
+			//	HRTIM_IRQ_ACK(hrtim, HRTIM_TIMER_TIMD, 2);
+			//if (set2x_mask(HRTIM_IRQ_GET(hrtim, HRTIM_TIMER_TIMD)) == 1){
+				HRTIM_IRQ_ACK(hrtim, HRTIM_TIMER_TIMD, 2048);
+				//printf("HRTIM IRQ GET %u\n", HRTIM_IRQ_GET(hrtim, HRTIM_TIMER_TIMD));	
+				//printf("Acquited\n");
+			//}
+			break;
+		}
+		case STM32_HRTIM_IRQ_STATUS:
+		{
+		//	if (HRTIM_IRQ_GET(hrtim, HRTIM_TIMER_TIMD) == 8720){
+			//if(cmp2_mask(HRTIM_IRQ_GET(hrtim, HRTIM_TIMER_TIMD))){
+			if(set2x_mask(HRTIM_IRQ_GET(hrtim, HRTIM_TIMER_TIMD))){
+				ret = 1;
+			} else {
+				ret = 0;
+			}
+			break;
+		}
 	}
+
+
+
 	return ret;
 	}
 
@@ -256,4 +381,18 @@ static int check_hrtim(struct hrtim_dev_s * hrtimc){
 		printf("ERROR: failed to get hrtim\n");
 		return 1;
 	}
+}
+
+static int cmp2_mask(uint16_t reg){
+	uint16_t mask = 0x0002; // 0000 0000 0000 0010 : The CMP2 register
+
+//	printf("cmp2_mask : %u\n", ( (mask &reg) >> 1) );
+	return ((mask &reg) >> 1);
+
+}
+
+static int set2x_mask(uint16_t reg){
+	uint16_t mask = 0x0800; // 0000 1000 0000 0000 : The RSTX2 register
+
+	return ((mask &reg) >> 11);
 }

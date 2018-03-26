@@ -9,3 +9,5 @@ NuttX platform.
 - Added ADC initial control driver.
 - Added Memory initial driver.
 
+The nuttx modification directory has the required modifications of the middleware 
+HRTIM Driver for the hardware interrupt fonctionnality to work.

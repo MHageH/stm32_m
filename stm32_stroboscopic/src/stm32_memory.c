@@ -43,9 +43,24 @@ uint8_t condition = 0;
 	  (read, write..) (means that the memory element of the SPI
 	  is selected).
 
+	* Write and Read operations are documented in the datasheet, the 
+	  methodologies are visible in the memory_read() and memory_write()
+	  operations
+
 */
 
+/*
+	TODO :
+		* Increase the driver complexity (versitality), rather by implementing 
+		an address resolution functionnality, which can grab a certain address, 
+		probe for information availability, then demand information, as well 
+		as the for the write function.
 
+		* Increase IOCTL capabilities.
+
+		* Improve open/close conditions.
+
+*/
 
 static int     memory_open(file_t *);
 static int     memory_close(file_t *);
