@@ -80,6 +80,8 @@ struct hrtim_config_ch2{
 struct hrtim_config_ch1 HRTIMD_CONFIG_CH1;
 struct hrtim_config_ch2 HRTIMD_CONFIG_CH2;
 
+struct stm32_hrtim_s global_hrtim_interrupt;
+
 // ******************************************************************
 // ************************* Prototypes *****************************
 // ******************************************************************
@@ -107,6 +109,34 @@ static const struct file_operations stm32_hrtim_control_ops ={
 	0,
 	stm32_hrtim_ioctl,
 };
+
+
+volatile uint32_t mavariable ;
+
+// ******************************************************************
+// ************************* HRTIM_HANDLER  *************************
+// ******************************************************************
+// Must be called from within a specific function
+static int hrtim_isr_handler(int irq, void *context, void *arg){
+	mavariable++;
+	//printf("TESTING\r\n");
+	struct stm32_hrtim_s * hrtim_structure = (struct stm32_hrtim_s *) arg;
+
+	// Verify that the hrtim special structure exists and we are within uint32 limits
+	// on count
+	DEBUGASSERT(hrtim_structure != NULL && hrtim_structure->counter < UINT32_MAX);
+	hrtim_structure->counter++;
+
+
+	// Resets the value on the SETX2 bit (0000 1000 0000 000)
+	HRTIM_IRQ_ACK(hrtim_structure->hrtim, hrtim_structure->timer, 2048);
+	return OK;
+}
+
+// ******************************************************************
+// ******************************************************************
+// ******************************************************************
+
 
 static int stm32_hrtim_open(file_t * filep){
 	bool initialize = false;
@@ -355,6 +385,37 @@ static int     stm32_hrtim_ioctl(FAR struct file * filep, int cmd, unsigned long
 			}
 			break;
 		}
+		case STM32_HRTIM_ISR_HANDLER_EXECUTION:
+		{
+			// Initialize the special structure
+			struct stm32_hrtim_s * hrtim_local = &global_hrtim_interrupt;
+			
+			mavariable = 0;
+
+			hrtim_local->timer = HRTIM_TIMER_TIMD;
+			hrtim_local->running = false;
+			hrtim_local->hrtim = hrtim;
+
+			hrtim_local->counter = 0;
+
+			// Set the timer ISR handler
+
+			HRTIM_IRQ_SETISR(hrtim_local->hrtim, hrtim_local->timer, 
+				hrtim_isr_handler, hrtim_local, 0);
+
+			uint32_t * pcounter = &hrtim_local->counter;
+
+			uint32_t reg = getreg32(STM32_HRTIM1_TIMERD_BASE + STM32_HRTIM_TIM_DIER_OFFSET);
+			reg |= HRTIM_IRQ_SETX2;
+			putreg32(reg, STM32_HRTIM1_TIMERD_BASE + STM32_HRTIM_TIM_DIER_OFFSET);
+
+
+			for (;;) {
+				//printf("HRTIM Counter value %u\n", *pcounter);
+				printf("mavariable Counter value %u\n", mavariable);
+
+			}
+		}
 	}
 
 
@@ -396,3 +457,4 @@ static int set2x_mask(uint16_t reg){
 
 	return ((mask &reg) >> 11);
 }
+

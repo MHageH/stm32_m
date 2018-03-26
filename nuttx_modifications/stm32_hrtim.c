@@ -1200,6 +1200,8 @@ static struct stm32_hrtim_tim_s g_timd =
     .dac       = HRTIM_TIMD_DAC,
 #endif
 #ifdef CONFIG_STM32_HRTIM_TIMD_IRQ
+    // Mohamed :: change from HRTIM_TIMD_IRQ to STM32_IRQ_HRTIMTD
+   // .irq       = STM32_IRQ_HRTIMTD,
     .irq       = HRTIM_TIMD_IRQ,
 #endif
 #ifdef CONFIG_STM32_HRTIM_TIMD_DMA
