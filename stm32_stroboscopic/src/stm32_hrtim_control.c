@@ -411,9 +411,8 @@ static int     stm32_hrtim_ioctl(FAR struct file * filep, int cmd, unsigned long
 
 
 			for (;;) {
-				//printf("HRTIM Counter value %u\n", *pcounter);
-				printf("mavariable Counter value %u\n", mavariable);
-
+				printf("HRTIM Counter value %u\n", *pcounter);
+				//printf("mavariable Counter value %u\n", mavariable);
 			}
 		}
 	}
